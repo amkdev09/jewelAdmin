@@ -42,7 +42,7 @@ export default function Products() {
     setLoading(true);
     productApi
       .list({ page, limit, sortBy: "latest" })
-      .then((res) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data) {
           setItems((res.data.data as { items: Product[] }).items ?? []);
           setTotal((res.data.data as { total: number }).total ?? 0);
@@ -61,7 +61,7 @@ export default function Products() {
     productApi
       .delete(id)
       .then(() => fetchProducts())
-      .catch((err) => alert((err as { message?: string })?.message ?? "Delete failed"));
+      .catch((err: any) => alert((err as { message?: string })?.message ?? "Delete failed"));
   };
 
   const totalPages = Math.ceil(total / limit) || 1;

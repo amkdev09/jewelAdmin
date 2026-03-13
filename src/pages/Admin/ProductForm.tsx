@@ -7,12 +7,22 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import { productApi } from "../../services/api";
 
+const METAL_COLORS = ["yellow", "rose", "white"];
+const PURITIES = ["24k", "22k", "18k"];
+const DIAMOND_TYPES = ["natural", "lab-grown", "none"];
+
+/** MongoDB ObjectId is 24 hexadecimal characters */
+function isValidObjectId(s: string): boolean {
+  return /^[a-fA-F0-9]{24}$/.test(s);
+}
+
 export default function ProductForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -22,6 +32,8 @@ export default function ProductForm() {
     metalColor: "yellow",
     purity: "22k",
     goldWeight: "",
+    diamondWeight: "",
+    diamondType: "natural",
     makingCharges: "",
     gstRate: "3",
     tags: "",
@@ -45,9 +57,11 @@ export default function ProductForm() {
             metalColor: (p.metalColor as string) ?? "yellow",
             purity: (p.purity as string) ?? "22k",
             goldWeight: p.goldWeight != null ? String(p.goldWeight) : "",
+            diamondWeight: p.diamondWeight != null ? String(p.diamondWeight) : "",
+            diamondType: (p.diamondType as string) ?? "natural",
             makingCharges: p.makingCharges != null ? String(p.makingCharges) : "",
             gstRate: p.gstRate != null ? String(p.gstRate) : "3",
-            tags: Array.isArray(p.tags) ? (p.tags as string[]).join(",") : "",
+            tags: Array.isArray(p.tags) ? (p.tags as string[]).join(", ") : "",
             imageUrls: Array.isArray(p.images) ? (p.images as string[]).join("\n") : "",
             isActive: p.isActive !== false,
           });
@@ -57,22 +71,76 @@ export default function ProductForm() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const appendFormField = (fd: FormData, key: string, value: string | number | boolean) => {
+    if (value === undefined || value === "") return;
+    fd.append(key, String(value));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
       alert("Name is required.");
       return;
     }
+    const categoryIdTrimmed = form.categoryId.trim();
+    if (categoryIdTrimmed && !isValidObjectId(categoryIdTrimmed)) {
+      alert(
+        "Category ID must be a valid 24-character hex ID (e.g. from your Categories list). Remove placeholders like {{...}}."
+      );
+      return;
+    }
+    const slug =
+      form.slug.trim() || form.name.trim().toLowerCase().replace(/\s+/g, "-");
+    const tagsArray = form.tags
+      ? form.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
     setSaving(true);
+
+    if (imageFiles.length > 0) {
+      const fd = new FormData();
+      fd.append("name", form.name.trim());
+      fd.append("slug", slug);
+      appendFormField(fd, "description", form.description.trim());
+      if (categoryIdTrimmed) fd.append("categoryId", categoryIdTrimmed);
+      fd.append("metalType", form.metalType);
+      fd.append("metalColor", form.metalColor);
+      fd.append("purity", form.purity);
+      appendFormField(fd, "goldWeight", form.goldWeight);
+      appendFormField(fd, "diamondWeight", form.diamondWeight);
+      appendFormField(fd, "diamondType", form.diamondType);
+      appendFormField(fd, "makingCharges", form.makingCharges);
+      appendFormField(fd, "gstRate", form.gstRate);
+      tagsArray.forEach((t) => fd.append("tags", t));
+      imageFiles.forEach((file) => fd.append("images", file));
+      fd.append("isActive", form.isActive ? "true" : "false");
+
+      const promise = isEdit
+        ? productApi.update(id!, fd)
+        : productApi.create(fd);
+      promise
+        .then(() => {
+          alert(isEdit ? "Product updated." : "Product created.");
+          navigate("/admin/products");
+        })
+        .catch((err) =>
+          alert((err as { message?: string })?.message ?? "Save failed")
+        )
+        .finally(() => setSaving(false));
+      return;
+    }
+
     const payload = {
       name: form.name.trim(),
-      slug: form.slug.trim() || form.name.trim().toLowerCase().replace(/\s+/g, "-"),
+      slug,
       description: form.description || undefined,
-      categoryId: form.categoryId || undefined,
+      categoryId: categoryIdTrimmed || undefined,
       metalType: form.metalType,
       metalColor: form.metalColor,
       purity: form.purity,
       goldWeight: form.goldWeight ? Number(form.goldWeight) : undefined,
+      diamondWeight: form.diamondWeight ? Number(form.diamondWeight) : undefined,
+      diamondType: form.diamondType || undefined,
       makingCharges: form.makingCharges ? Number(form.makingCharges) : undefined,
       gstRate: form.gstRate ? Number(form.gstRate) : undefined,
       tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
@@ -154,8 +222,11 @@ export default function ProductForm() {
             <Input
               value={form.categoryId}
               onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-              placeholder="MongoDB category ID"
+              placeholder="24-char hex ID, e.g. 507f1f77bcf86cd799439011"
             />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Optional. Use a real category _id from your database (24 hex characters). Do not paste doc placeholders like {`{{...}}`}.
+            </p>
           </div>
           <div>
             <Label>Metal type</Label>
@@ -169,15 +240,31 @@ export default function ProductForm() {
             </select>
           </div>
           <div>
+            <Label>Metal color</Label>
+            <select
+              value={form.metalColor}
+              onChange={(e) => setForm((f) => ({ ...f, metalColor: e.target.value }))}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            >
+              {METAL_COLORS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
             <Label>Purity</Label>
             <select
               value={form.purity}
               onChange={(e) => setForm((f) => ({ ...f, purity: e.target.value }))}
               className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
             >
-              <option value="24k">24k</option>
-              <option value="22k">22k</option>
-              <option value="18k">18k</option>
+              {PURITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -189,6 +276,30 @@ export default function ProductForm() {
               onChange={(e) => setForm((f) => ({ ...f, goldWeight: e.target.value }))}
               placeholder="5.5"
             />
+          </div>
+          <div>
+            <Label>Diamond weight (ct)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={form.diamondWeight}
+              onChange={(e) => setForm((f) => ({ ...f, diamondWeight: e.target.value }))}
+              placeholder="0.5"
+            />
+          </div>
+          <div>
+            <Label>Diamond type</Label>
+            <select
+              value={form.diamondType}
+              onChange={(e) => setForm((f) => ({ ...f, diamondType: e.target.value }))}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            >
+              {DIAMOND_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <Label>Making charges (₹)</Label>
@@ -218,11 +329,29 @@ export default function ProductForm() {
           />
         </div>
         <div>
-          <Label>Image URLs (one per line)</Label>
+          <Label>Images (upload files)</Label>
+          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            Upload image files to send as FormData (per API). If you upload files, they are used instead of URLs below.
+          </p>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+            multiple
+            onChange={(e) => setImageFiles(e.target.files ? Array.from(e.target.files) : [])}
+            className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-brand-600 dark:text-gray-400"
+          />
+          {imageFiles.length > 0 && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {imageFiles.length} file(s) selected
+            </p>
+          )}
+        </div>
+        <div>
+          <Label>Image URLs (one per line, used when no files uploaded)</Label>
           <textarea
             value={form.imageUrls}
             onChange={(e) => setForm((f) => ({ ...f, imageUrls: e.target.value }))}
-            placeholder="https://..."
+            placeholder="https://res.cloudinary.com/.../image1.jpg"
             rows={3}
             className="h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
           />

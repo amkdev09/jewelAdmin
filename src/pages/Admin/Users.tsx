@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../../components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import Button from "../../components/ui/button/Button";
+import { Modal } from "../../components/ui/modal";
 import { userApi } from "../../services/api";
 
 interface User {
@@ -16,6 +12,7 @@ interface User {
   email?: string;
   phone?: string;
   createdAt?: string;
+  role?: string;
 }
 
 export default function Users() {
@@ -24,13 +21,19 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+   const [detailOpen, setDetailOpen] = useState(false);
+   const [detailLoading, setDetailLoading] = useState(false);
+   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+   const [editRole, setEditRole] = useState<string>("customer");
+   const [saving, setSaving] = useState(false);
+   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const limit = 10;
 
   const fetchUsers = () => {
     setLoading(true);
     userApi
       .list({ page, limit, search: search || undefined, sortBy: "latest" })
-      .then((res) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data as { items: User[]; total: number };
           setItems(d.items ?? []);
@@ -44,6 +47,57 @@ export default function Users() {
   useEffect(() => {
     fetchUsers();
   }, [page]);
+
+  const openUserDetail = (id: string) => {
+    setErrorMessage(null);
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setSelectedUser(null);
+    userApi
+      .getById(id)
+      .then((res) => {
+        if (res.data.success && res.data.data) {
+          const u = res.data.data as Record<string, unknown>;
+          const mapped: User = {
+            _id: (u._id as string) ?? id,
+            name: (u.name as string) ?? "",
+            email: (u.email as string) ?? "",
+            phone: (u.phone as string) ?? "",
+            createdAt: (u.createdAt as string) ?? undefined,
+            role: (u.role as string) ?? "customer",
+          };
+          setSelectedUser(mapped);
+          setEditRole(mapped.role ?? "customer");
+        } else {
+          setErrorMessage("User details not found.");
+        }
+      })
+      .catch((err: unknown) => {
+        setErrorMessage(
+          (err as { message?: string })?.message ?? "Failed to load user details."
+        );
+      })
+      .finally(() => setDetailLoading(false));
+  };
+
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    setSaving(true);
+    setErrorMessage(null);
+    userApi
+      .update(selectedUser._id, { role: editRole || "customer" })
+      .then(() => {
+        setDetailOpen(false);
+        fetchUsers();
+      })
+      .catch((err: unknown) => {
+        setErrorMessage(
+          (err as { message?: string })?.message ?? "Update failed. Please try again."
+        );
+      })
+      .finally(() => setSaving(false));
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,26 +143,38 @@ export default function Users() {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+            <Table className="w-full table-fixed">
+              <TableHeader className="border-gray-100 dark:border-gray-800 border-y bg-gray-50/80 dark:bg-gray-800/40">
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[26%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Name
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[32%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Email
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[18%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Phone
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-[14%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+                  >
+                    Role
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-[10%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+                  >
+                    Joined
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -116,23 +182,39 @@ export default function Users() {
                 {items.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={3}
-                      className="py-8 text-center text-gray-500 dark:text-gray-400"
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No users found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   items.map((u) => (
-                    <TableRow key={u._id}>
-                      <TableCell className="py-3 font-medium text-gray-800 dark:text-white/90">
+                  <TableRow
+                    key={u._id}
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                    onClick={() => openUserDetail(u._id)}
+                  >
+                      <TableCell className="px-4 py-2.5 text-left align-middle font-medium text-gray-800 dark:text-white/90">
                         {u.name ?? "—"}
                       </TableCell>
-                      <TableCell className="py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {u.email ?? "—"}
                       </TableCell>
-                      <TableCell className="py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {u.phone ?? "—"}
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
+                        {u.role ?? "customer"}
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
+                        {u.createdAt
+                          ? new Date(u.createdAt).toLocaleDateString("en-IN", {
+                              year: "numeric",
+                              month: "short",
+                              day: "2-digit",
+                            })
+                          : "—"}
                       </TableCell>
                     </TableRow>
                   ))
@@ -165,6 +247,106 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={detailOpen}
+        onClose={() => !saving && setDetailOpen(false)}
+        className="max-w-lg p-6 shadow-xl"
+      >
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+          User details
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          View basic info and update the user&apos;s role.
+        </p>
+        {detailLoading ? (
+          <div className="mt-6 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-10 rounded bg-gray-100 dark:bg-gray-800 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : selectedUser ? (
+          <form onSubmit={handleUpdateUser} className="mt-5 space-y-4">
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                Name
+              </div>
+              <div className="mt-0.5 text-sm text-gray-900 dark:text-white/90">
+                {selectedUser.name || "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                Email
+              </div>
+              <div className="mt-0.5 text-sm text-gray-900 dark:text-white/90 break-all">
+                {selectedUser.email || "—"}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Phone
+                </div>
+                <div className="mt-0.5 text-sm text-gray-900 dark:text-white/90">
+                  {selectedUser.phone || "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Joined
+                </div>
+                <div className="mt-0.5 text-sm text-gray-900 dark:text-white/90">
+                  {selectedUser.createdAt
+                    ? new Date(selectedUser.createdAt).toLocaleDateString(
+                        "en-IN",
+                        { year: "numeric", month: "short", day: "2-digit" }
+                      )
+                    : "—"}
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Role
+              </label>
+              <select
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-theme-xs focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              >
+                <option value="customer">Customer</option>
+                <option value="admin">Admin</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+            {errorMessage && (
+              <p className="text-sm text-error-500">{errorMessage}</p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setDetailOpen(false)}
+                disabled={saving}
+              >
+                Close
+              </Button>
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <p className="mt-6 text-sm text-error-500">
+            {errorMessage ?? "User not found."}
+          </p>
+        )}
+      </Modal>
     </>
   );
 }

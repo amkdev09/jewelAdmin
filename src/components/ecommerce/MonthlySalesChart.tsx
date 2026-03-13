@@ -3,9 +3,115 @@ import { ApexOptions } from "apexcharts";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { analyticsApi } from "../../services/api";
+
+type SalesPoint = {
+  label?: string;
+  date?: string;
+  totalRevenue?: number;
+  value?: number;
+};
+
+type TimeRangeKey = "this_year" | "last_6_months" | "last_12_months";
+
+function buildDateRange(key: TimeRangeKey) {
+  const end = new Date();
+  const start = new Date(end);
+
+  if (key === "this_year") {
+    start.setMonth(0, 1);
+  } else if (key === "last_6_months") {
+    start.setMonth(end.getMonth() - 5, 1);
+  } else {
+    start.setMonth(end.getMonth() - 11, 1);
+  }
+
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+}
 
 export default function MonthlySalesChart() {
+  const [range, setRange] = useState<TimeRangeKey>("last_12_months");
+  const [points, setPoints] = useState<SalesPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const { startDate, endDate } = buildDateRange(range);
+    setLoading(true);
+    analyticsApi
+      .getSales({ startDate, endDate, groupBy: "month" })
+      .then((res) => {
+        if (!res.data?.success || !res.data?.data) {
+          setPoints([]);
+          return;
+        }
+
+        const raw = res.data.data as unknown;
+        const list: SalesPoint[] = Array.isArray(raw)
+          ? raw
+              .map((item) => {
+                const anyItem = item as Record<string, unknown>;
+                const label = (anyItem.label as string) ?? (anyItem.month as string);
+                const date = (anyItem.date as string) ?? undefined;
+                const totalRevenue =
+                  (anyItem.totalRevenue as number) ??
+                  (anyItem.revenue as number) ??
+                  (anyItem.value as number);
+                if (!label && !date) return null;
+                if (typeof totalRevenue !== "number") return null;
+                return {
+                  label,
+                  date,
+                  totalRevenue,
+                  value: totalRevenue,
+                };
+              })
+              .filter(Boolean) as SalesPoint[]
+          : [];
+
+        setPoints(list);
+      })
+      .catch(() => setPoints([]))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  const { categories, seriesData } = useMemo(() => {
+    if (!points.length) {
+      return {
+        categories: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ],
+        seriesData: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      };
+    }
+
+    const cats = points.map((p) => {
+      if (p.label) return p.label;
+      if (!p.date) return "";
+      const d = new Date(p.date);
+      return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+    });
+
+    return {
+      categories: cats,
+      seriesData: points.map((p) => p.value ?? p.totalRevenue ?? 0),
+    };
+  }, [points]);
+
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -33,20 +139,7 @@ export default function MonthlySalesChart() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories,
       axisBorder: {
         show: false,
       },
@@ -88,7 +181,7 @@ export default function MonthlySalesChart() {
   const series = [
     {
       name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      data: seriesData,
     },
   ];
   const [isOpen, setIsOpen] = useState(false);
@@ -116,16 +209,31 @@ export default function MonthlySalesChart() {
             className="w-40 p-2"
           >
             <DropdownItem
-              onItemClick={closeDropdown}
+              onItemClick={() => {
+                setRange("this_year");
+                closeDropdown();
+              }}
               className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
-              View More
+              This year
             </DropdownItem>
             <DropdownItem
-              onItemClick={closeDropdown}
+              onItemClick={() => {
+                setRange("last_6_months");
+                closeDropdown();
+              }}
               className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
-              Delete
+              Last 6 months
+            </DropdownItem>
+            <DropdownItem
+              onItemClick={() => {
+                setRange("last_12_months");
+                closeDropdown();
+              }}
+              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+            >
+              Last 12 months
             </DropdownItem>
           </Dropdown>
         </div>
@@ -133,7 +241,18 @@ export default function MonthlySalesChart() {
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
-          <Chart options={options} series={series} type="bar" height={180} />
+          {loading ? (
+            <div className="py-8 space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 rounded bg-gray-100 dark:bg-gray-800 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <Chart options={options} series={series} type="bar" height={180} />
+          )}
         </div>
       </div>
     </div>
