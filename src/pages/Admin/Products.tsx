@@ -12,7 +12,7 @@ import Button from "../../components/ui/button/Button";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import { productApi } from "../../services/api";
-import { PlusIcon, PencilIcon, TrashBinIcon } from "../../icons";
+import { PlusIcon, PencilIcon, TrashBinIcon, BoxIcon } from "../../icons";
 
 interface Product {
   _id: string;
@@ -167,7 +167,14 @@ export default function Products() {
                           <Link
                             to={`/admin/products/${p._id}`}
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                            title="Edit"
+                            title="Manage (variants & inventory)"
+                          >
+                            <BoxIcon className="size-5 text-gray-500" />
+                          </Link>
+                          <Link
+                            to={`/admin/products/${p._id}/edit`}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                            title="Edit product"
                           >
                             <PencilIcon className="size-5 text-gray-500" />
                           </Link>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -20,6 +20,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Products from "./pages/Admin/Products";
+import ProductDetail from "./pages/Admin/ProductDetail";
 import ProductForm from "./pages/Admin/ProductForm";
 import Orders from "./pages/Admin/Orders";
 import OrderDetail from "./pages/Admin/OrderDetail";
@@ -28,6 +29,10 @@ import Coupons from "./pages/Admin/Coupons";
 import Banners from "./pages/Admin/Banners";
 import GoldPrice from "./pages/Admin/GoldPrice";
 import Categories from "./pages/Admin/Categories";
+import Inventory from "./pages/Admin/Inventory";
+import InventoryDetail from "./pages/Admin/InventoryDetail";
+import Variants from "./pages/Admin/Variants";
+import Reviews from "./pages/Admin/Reviews";
 
 export default function App() {
   return (
@@ -65,13 +70,18 @@ export default function App() {
             <Route path="/admin/categories" element={<Categories />} />
             <Route path="/admin/products" element={<Products />} />
             <Route path="/admin/products/new" element={<ProductForm />} />
-            <Route path="/admin/products/:id" element={<ProductForm />} />
+            <Route path="/admin/products/:id/edit" element={<ProductForm />} />
+            <Route path="/admin/products/:id" element={<ProductDetail />} />
             <Route path="/admin/orders" element={<Orders />} />
             <Route path="/admin/orders/:id" element={<OrderDetail />} />
             <Route path="/admin/users" element={<Users />} />
             <Route path="/admin/coupons" element={<Coupons />} />
             <Route path="/admin/banners" element={<Banners />} />
             <Route path="/admin/gold-price" element={<GoldPrice />} />
+            <Route path="/admin/inventory" element={<Inventory />} />
+            <Route path="/admin/inventory/:id" element={<InventoryDetail />} />
+            <Route path="/admin/variants" element={<Variants />} />
+            <Route path="/admin/reviews" element={<Reviews />} />
           </Route>
 
           {/* Auth Layout (public) */}

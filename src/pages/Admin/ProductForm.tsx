@@ -171,7 +171,7 @@ export default function ProductForm() {
             title: "Success",
             message: isEdit ? "Product updated." : "Product created.",
           });
-          navigate("/admin/products");
+          navigate(isEdit && id ? `/admin/products/${id}` : "/admin/products");
         })
         .catch((err: unknown) =>
           setAlertState({
@@ -213,7 +213,7 @@ export default function ProductForm() {
           title: "Success",
           message: isEdit ? "Product updated." : "Product created.",
         });
-        navigate("/admin/products");
+        navigate(isEdit && id ? `/admin/products/${id}` : "/admin/products");
       })
       .catch((err: unknown) =>
         setAlertState({

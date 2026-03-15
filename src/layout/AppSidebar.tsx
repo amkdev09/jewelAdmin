@@ -3,21 +3,18 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
+  BoxIcon,
   BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
-  DollarLineIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
-  TableIcon,
+  TaskIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -33,18 +30,34 @@ const navItems: NavItem[] = [
     path: "/",
   },
   {
-    icon: <BoxCubeIcon />,
+    icon: <UserCircleIcon />,
+    name: "Users",
+    path: "/admin/users",
+  },
+  {
+    icon: <ListIcon />,
     name: "Manage",
     subItems: [
-      { name: "Categories", path: "/admin/categories", pro: false },
-      { name: "Products", path: "/admin/products", pro: false },
-      { name: "Orders", path: "/admin/orders", pro: false },
-      { name: "Users", path: "/admin/users", pro: false },
-      { name: "Coupons", path: "/admin/coupons", pro: false },
       { name: "Banners", path: "/admin/banners", pro: false },
+      { name: "Coupons", path: "/admin/coupons", pro: false },
       { name: "Gold Price", path: "/admin/gold-price", pro: false },
+      { name: "Reviews", path: "/admin/reviews", pro: false },
     ],
   },
+  {
+    icon: <BoxIcon />,
+    name: "Product",
+    subItems: [
+      { name: "Products", path: "/admin/products", pro: false },
+      { name: "Categories", path: "/admin/categories", pro: false },
+    ],
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Orders",
+    path: "/admin/orders",
+  },
+
   // {
   //   icon: <CalenderIcon />,
   //   name: "Calendar",
@@ -119,7 +132,6 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
@@ -132,7 +144,8 @@ const AppSidebar: React.FC = () => {
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
+            const match = isActive(subItem.path) || (subItem.path === "/admin/products" && location.pathname.startsWith("/admin/products/"));
+            if (match) {
               setOpenSubmenu({
                 type: menuType as "main" | "others",
                 index,
@@ -245,11 +258,13 @@ const AppSidebar: React.FC = () => {
               }}
             >
               <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
+                {nav.subItems.map((subItem) => {
+                  const itemActive = isActive(subItem.path) || (subItem.path === "/admin/products" && location.pathname.startsWith("/admin/products/"));
+                  return (
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
-                      className={`menu-dropdown-item ${isActive(subItem.path)
+                      className={`menu-dropdown-item ${itemActive
                         ? "menu-dropdown-item-active"
                         : "menu-dropdown-item-inactive"
                         }`}
@@ -258,7 +273,7 @@ const AppSidebar: React.FC = () => {
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
+                            className={`ml-auto ${itemActive
                               ? "menu-dropdown-badge-active"
                               : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge`}
@@ -268,7 +283,7 @@ const AppSidebar: React.FC = () => {
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
+                            className={`ml-auto ${itemActive
                               ? "menu-dropdown-badge-active"
                               : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge`}
@@ -279,7 +294,8 @@ const AppSidebar: React.FC = () => {
                       </span>
                     </Link>
                   </li>
-                ))}
+                );
+                })}
               </ul>
             </div>
           )}
@@ -308,9 +324,9 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <h2 className="text-2xl font-bold text-[var(--color-blue-light-950)]">Gleen Star</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-brand-400)]">Gleen Star</h2>
           ) : (
-            <h2 className="text-2xl font-bold text-[var(--color-blue-light-950)]">GS</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-brand-400)]">GS</h2>
           )}
         </Link>
       </div>
