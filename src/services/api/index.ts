@@ -7,6 +7,7 @@ export { bannerApi } from "./bannerApi";
 export { goldPriceApi } from "./goldPriceApi";
 export { analyticsApi } from "./analyticsApi";
 export { uploadApi } from "./uploadApi";
+export { categoryApi } from "./categoryApi";
 
 export type { AdminLoginBody, AdminLoginResponse } from "./authApi";
 export type { ProductListParams, ProductFormData } from "./productApi";

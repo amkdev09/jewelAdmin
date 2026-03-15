@@ -73,7 +73,7 @@ export default function Orders() {
         sortBy: "latest",
         ...(statusFilter ? { orderStatus: statusFilter as OrderStatus } : {}),
       })
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: { items?: Order[]; total?: number } } }) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data as { items: Order[]; total: number };
           setItems(d.items ?? []);
@@ -92,7 +92,7 @@ export default function Orders() {
     orderApi
       .updateStatus(id, { orderStatus, trackingNumber })
       .then(() => fetchOrders())
-      .catch((err) =>
+      .catch((err: unknown) =>
         alert((err as { message?: string })?.message ?? "Update failed")
       );
   };
@@ -135,36 +135,36 @@ export default function Orders() {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+            <Table className="w-full table-fixed">
+              <TableHeader className="border-gray-100 dark:border-gray-800 border-y bg-gray-50/80 dark:bg-gray-800/40">
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[24%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Order
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[26%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Customer
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[18%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Amount
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[18%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Order Status
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[14%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Payment
                   </TableCell>
@@ -175,7 +175,7 @@ export default function Orders() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="py-8 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No orders found.
                     </TableCell>
@@ -183,7 +183,7 @@ export default function Orders() {
                 ) : (
                   items.map((order) => (
                     <TableRow key={order._id}>
-                      <TableCell className="py-3">
+                      <TableCell className="px-4 py-2.5 text-left align-middle">
                         <Link
                           to={`/admin/orders/${order._id}`}
                           className="font-medium text-brand-500 hover:underline"
@@ -191,13 +191,13 @@ export default function Orders() {
                           {order.orderNumber ?? order._id}
                         </Link>
                       </TableCell>
-                      <TableCell className="py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {order.userId?.name ?? order.userId?.email ?? "—"}
                       </TableCell>
-                      <TableCell className="py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {formatCurrency(order.finalAmount ?? order.totalAmount ?? 0)}
                       </TableCell>
-                      <TableCell className="py-3">
+                      <TableCell className="px-4 py-2.5 text-left align-middle">
                         <select
                           value={order.orderStatus ?? "pending"}
                           onChange={(e) =>
@@ -206,7 +206,7 @@ export default function Orders() {
                               e.target.value as OrderStatus
                             )
                           }
-                          className="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          className="rounded border border-gray-300 bg-white px-2.5 py-1.5 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                         >
                           {ORDER_STATUSES.map((s) => (
                             <option key={s} value={s}>
@@ -215,7 +215,7 @@ export default function Orders() {
                           ))}
                         </select>
                       </TableCell>
-                      <TableCell className="py-3">
+                      <TableCell className="px-4 py-2.5 text-left align-middle">
                         <Badge
                           size="sm"
                           color={

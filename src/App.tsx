@@ -27,6 +27,7 @@ import Users from "./pages/Admin/Users";
 import Coupons from "./pages/Admin/Coupons";
 import Banners from "./pages/Admin/Banners";
 import GoldPrice from "./pages/Admin/GoldPrice";
+import Categories from "./pages/Admin/Categories";
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="/bar-chart" element={<BarChart />} />
 
             {/* Jewellery Admin */}
+            <Route path="/admin/categories" element={<Categories />} />
             <Route path="/admin/products" element={<Products />} />
             <Route path="/admin/products/new" element={<ProductForm />} />
             <Route path="/admin/products/:id" element={<ProductForm />} />

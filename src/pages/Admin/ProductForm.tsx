@@ -5,11 +5,25 @@ import PageMeta from "../../components/common/PageMeta";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
-import { productApi } from "../../services/api";
+import Alert from "../../components/ui/alert/Alert";
+import { productApi, categoryApi, type ProductFormData } from "../../services/api";
 
 const METAL_COLORS = ["yellow", "rose", "white"];
 const PURITIES = ["24k", "22k", "18k"];
 const DIAMOND_TYPES = ["natural", "lab-grown", "none"];
+
+interface CategoryOption {
+  _id: string;
+  name?: string;
+  slug?: string;
+}
+
+type AlertVariant = "success" | "error" | "warning" | "info";
+interface AlertState {
+  variant: AlertVariant;
+  title: string;
+  message: string;
+}
 
 /** MongoDB ObjectId is 24 hexadecimal characters */
 function isValidObjectId(s: string): boolean {
@@ -23,6 +37,9 @@ export default function ProductForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -45,7 +62,7 @@ export default function ProductForm() {
     if (!id) return;
     productApi
       .getById(id)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: unknown } }) => {
         if (res.data.success && res.data.data) {
           const p = res.data.data as Record<string, unknown>;
           setForm({
@@ -71,6 +88,27 @@ export default function ProductForm() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    setCategoriesLoading(true);
+    categoryApi
+      .list({ limit: 100, parentCategory: null, isActive: true })
+      .then((res: {
+        data: {
+          success?: boolean;
+          data?: { items?: CategoryOption[]; total?: number };
+        };
+      }) => {
+        if (res.data.success && res.data.data) {
+          const d = res.data.data as { items: CategoryOption[] };
+          setCategories(d.items ?? []);
+        } else {
+          setCategories([]);
+        }
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setCategoriesLoading(false));
+  }, []);
+
   const appendFormField = (fd: FormData, key: string, value: string | number | boolean) => {
     if (value === undefined || value === "") return;
     fd.append(key, String(value));
@@ -78,15 +116,23 @@ export default function ProductForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setAlertState(null);
     if (!form.name.trim()) {
-      alert("Name is required.");
+      setAlertState({
+        variant: "warning",
+        title: "Validation",
+        message: "Name is required.",
+      });
       return;
     }
     const categoryIdTrimmed = form.categoryId.trim();
     if (categoryIdTrimmed && !isValidObjectId(categoryIdTrimmed)) {
-      alert(
-        "Category ID must be a valid 24-character hex ID (e.g. from your Categories list). Remove placeholders like {{...}}."
-      );
+      setAlertState({
+        variant: "warning",
+        title: "Validation",
+        message:
+          "Category ID must be a valid 24-character hex ID (e.g. from your Categories list). Remove placeholders like {{...}}.",
+      });
       return;
     }
     const slug =
@@ -120,11 +166,19 @@ export default function ProductForm() {
         : productApi.create(fd);
       promise
         .then(() => {
-          alert(isEdit ? "Product updated." : "Product created.");
+          setAlertState({
+            variant: "success",
+            title: "Success",
+            message: isEdit ? "Product updated." : "Product created.",
+          });
           navigate("/admin/products");
         })
-        .catch((err) =>
-          alert((err as { message?: string })?.message ?? "Save failed")
+        .catch((err: unknown) =>
+          setAlertState({
+            variant: "error",
+            title: "Error",
+            message: (err as { message?: string })?.message ?? "Save failed",
+          })
         )
         .finally(() => setSaving(false));
       return;
@@ -150,15 +204,23 @@ export default function ProductForm() {
       isActive: form.isActive,
     };
     const promise = isEdit
-      ? productApi.update(id!, payload)
-      : productApi.create(payload);
+      ? productApi.update(id!, payload as ProductFormData)
+      : productApi.create(payload as ProductFormData);
     promise
       .then(() => {
-        alert(isEdit ? "Product updated." : "Product created.");
+        setAlertState({
+          variant: "success",
+          title: "Success",
+          message: isEdit ? "Product updated." : "Product created.",
+        });
         navigate("/admin/products");
       })
-      .catch((err) =>
-        alert((err as { message?: string })?.message ?? "Save failed")
+      .catch((err: unknown) =>
+        setAlertState({
+          variant: "error",
+          title: "Error",
+          message: (err as { message?: string })?.message ?? "Save failed",
+        })
       )
       .finally(() => setSaving(false));
   };
@@ -183,6 +245,34 @@ export default function ProductForm() {
         description={isEdit ? "Edit product" : "Create product"}
       />
       <PageBreadCrumb pageTitle={isEdit ? "Edit Product" : "New Product"} />
+      {alertState && (
+        <div className="relative mb-4">
+          <Alert
+            variant={alertState.variant}
+            title={alertState.title}
+            message={alertState.message}
+          />
+          <button
+            type="button"
+            onClick={() => setAlertState(null)}
+            className="absolute right-3 top-3 rounded p-1 text-gray-500 hover:bg-gray-200/80 hover:text-gray-700 dark:hover:bg-gray-700/80 dark:hover:text-gray-300"
+            aria-label="Dismiss"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-5"
@@ -194,7 +284,6 @@ export default function ProductForm() {
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Gold Ring"
-              required
             />
           </div>
           <div>
@@ -218,14 +307,30 @@ export default function ProductForm() {
         </div>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <Label>Category ID</Label>
-            <Input
+            <Label>Category</Label>
+            <select
               value={form.categoryId}
-              onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-              placeholder="24-char hex ID, e.g. 507f1f77bcf86cd799439011"
-            />
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  categoryId: e.target.value,
+                }))
+              }
+              disabled={categoriesLoading}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            >
+              <option value="">
+                {categoriesLoading ? "Loading categories..." : "No category"}
+              </option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name ?? c.slug ?? c._id}
+                </option>
+              ))}
+            </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Optional. Use a real category _id from your database (24 hex characters). Do not paste doc placeholders like {`{{...}}`}.
+              Select a category from your admin categories list. The selected category&apos;s
+              ID will be sent as <span className="font-mono">categoryId</span> in the product API.
             </p>
           </div>
           <div>
@@ -271,7 +376,7 @@ export default function ProductForm() {
             <Label>Gold weight (g)</Label>
             <Input
               type="number"
-              step="0.01"
+              step={0.01}
               value={form.goldWeight}
               onChange={(e) => setForm((f) => ({ ...f, goldWeight: e.target.value }))}
               placeholder="5.5"
@@ -281,7 +386,7 @@ export default function ProductForm() {
             <Label>Diamond weight (ct)</Label>
             <Input
               type="number"
-              step="0.01"
+              step={0.01}
               value={form.diamondWeight}
               onChange={(e) => setForm((f) => ({ ...f, diamondWeight: e.target.value }))}
               placeholder="0.5"

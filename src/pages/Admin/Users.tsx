@@ -21,12 +21,12 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-   const [detailOpen, setDetailOpen] = useState(false);
-   const [detailLoading, setDetailLoading] = useState(false);
-   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-   const [editRole, setEditRole] = useState<string>("customer");
-   const [saving, setSaving] = useState(false);
-   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editRole, setEditRole] = useState<string>("customer");
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const limit = 10;
 
   const fetchUsers = () => {
@@ -55,7 +55,7 @@ export default function Users() {
     setSelectedUser(null);
     userApi
       .getById(id)
-      .then((res) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data) {
           const u = res.data.data as Record<string, unknown>;
           const mapped: User = {
@@ -190,11 +190,11 @@ export default function Users() {
                   </TableRow>
                 ) : (
                   items.map((u) => (
-                  <TableRow
-                    key={u._id}
-                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40"
-                    onClick={() => openUserDetail(u._id)}
-                  >
+                    <TableRow
+                      key={u._id}
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                      onClick={() => openUserDetail(u._id as string)}
+                    >
                       <TableCell className="px-4 py-2.5 text-left align-middle font-medium text-gray-800 dark:text-white/90">
                         {u.name ?? "—"}
                       </TableCell>
@@ -210,10 +210,10 @@ export default function Users() {
                       <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {u.createdAt
                           ? new Date(u.createdAt).toLocaleDateString("en-IN", {
-                              year: "numeric",
-                              month: "short",
-                              day: "2-digit",
-                            })
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                          })
                           : "—"}
                       </TableCell>
                     </TableRow>
@@ -302,9 +302,9 @@ export default function Users() {
                 <div className="mt-0.5 text-sm text-gray-900 dark:text-white/90">
                   {selectedUser.createdAt
                     ? new Date(selectedUser.createdAt).toLocaleDateString(
-                        "en-IN",
-                        { year: "numeric", month: "short", day: "2-digit" }
-                      )
+                      "en-IN",
+                      { year: "numeric", month: "short", day: "2-digit" }
+                    )
                     : "—"}
                 </div>
               </div>

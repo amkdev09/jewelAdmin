@@ -77,7 +77,7 @@ export default function Products() {
           </h2>
           <Link to="/admin/products/new">
             <Button size="sm" className="inline-flex items-center gap-2">
-              <PlusIcon className="size-5" />
+              <PlusIcon className="size-5 fill-white" />
               Add Product
             </Button>
           </Link>
@@ -93,30 +93,30 @@ export default function Products() {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+            <Table className="w-full table-fixed">
+              <TableHeader className="border-gray-100 dark:border-gray-800 border-y bg-gray-50/80 dark:bg-gray-800/40">
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[40%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Product
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[20%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Price
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-[16%] px-4 py-2.5 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Status
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400"
+                    className="w-[24%] px-4 py-2.5 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
                   >
                     Actions
                   </TableCell>
@@ -127,7 +127,7 @@ export default function Products() {
                   <TableRow>
                     <TableCell
                       colSpan={4}
-                      className="py-8 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No products yet. Add your first product.
                     </TableCell>
@@ -135,26 +135,26 @@ export default function Products() {
                 ) : (
                   items.map((p) => (
                     <TableRow key={p._id}>
-                      <TableCell className="py-3">
+                      <TableCell className="px-4 py-2.5 text-left align-middle">
                         <div className="flex items-center gap-3">
                           {p.images?.[0] ? (
                             <img
                               src={p.images[0]}
                               alt=""
-                              className="h-10 w-10 rounded object-cover"
+                              className="h-10 w-10 shrink-0 rounded object-cover"
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded bg-gray-200 dark:bg-gray-700" />
+                            <div className="h-10 w-10 shrink-0 rounded bg-gray-200 dark:bg-gray-700" />
                           )}
-                          <span className="font-medium text-gray-800 dark:text-white/90">
+                          <span className="min-w-0 font-medium text-gray-800 dark:text-white/90">
                             {p.name ?? p.slug ?? "—"}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {p.basePrice != null ? formatCurrency(p.basePrice) : "—"}
                       </TableCell>
-                      <TableCell className="py-3">
+                      <TableCell className="px-4 py-2.5 text-left align-middle">
                         <Badge
                           size="sm"
                           color={p.isActive !== false ? "success" : "error"}
@@ -162,8 +162,8 @@ export default function Products() {
                           {p.isActive !== false ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="py-3 text-end">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="px-4 py-2.5 text-right align-middle">
+                        <div className="inline-flex justify-end gap-2">
                           <Link
                             to={`/admin/products/${p._id}`}
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
