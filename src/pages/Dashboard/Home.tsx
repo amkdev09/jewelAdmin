@@ -23,24 +23,21 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  // useEffect(() => {
-  //   analyticsApi
-  //     .getTopProducts({ limit: 10 })
-  //     .then((res: {
-  //       data: {
-  //         success?: boolean;
-  //         data?: { name?: string; totalSold?: number; totalRevenue?: number }[];
-  //       };
-  //     }) => {
-  //       if (res.data.success && Array.isArray(res.data.data)) {
-  //         setTopProducts(res.data.data);
-  //       } else {
-  //         setTopProducts([]);
-  //       }
-  //     })
-  //     .catch(() => setTopProducts([]))
-  //     .finally(() => setTopLoading(false));
-  // }, []);
+  useEffect(() => {
+    analyticsApi
+      .getTopProducts({ limit: 10 })
+      .then((res: { data: { success?: boolean; data?: unknown } }) => {
+        if (res.data.success && Array.isArray(res.data.data)) {
+          setTopProducts(
+            (res.data.data as { name?: string; totalSold?: number; totalRevenue?: number }[]) ?? []
+          );
+        } else {
+          setTopProducts([]);
+        }
+      })
+      .catch(() => setTopProducts([]))
+      .finally(() => setTopLoading(false));
+  }, []);
 
   return (
     <>

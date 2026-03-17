@@ -60,7 +60,7 @@ export default function Variants() {
     setLoading(true);
     variantApi
       .listByProduct(selectedProductId)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: Variant[] } }) => {
         if (res.data.success && res.data.data) {
           setItems(Array.isArray(res.data.data) ? res.data.data : []);
         } else {
@@ -85,7 +85,7 @@ export default function Variants() {
   useEffect(() => {
     productApi
       .list({ page: 1, limit: 50, sortBy: "latest" })
-      .then((res: { data: { success?: boolean; data?: { items?: ProductOption[] } } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data?.items) {
           setProducts(res.data.data.items);
         }

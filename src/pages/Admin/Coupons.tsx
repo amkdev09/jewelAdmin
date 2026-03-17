@@ -55,7 +55,7 @@ export default function Coupons() {
     setLoading(true);
     couponApi
       .list({ limit: 50 })
-      .then((res: { data: { success?: boolean; data?: { items?: Coupon[] } } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data as { items: Coupon[] };
           setItems(d.items ?? []);

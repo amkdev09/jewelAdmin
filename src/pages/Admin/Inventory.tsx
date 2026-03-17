@@ -65,7 +65,7 @@ export default function Inventory() {
 
     inventoryApi
       .list(params)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: { items?: InventoryItem[]; total?: number } } }) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data;
           setItems(d.items ?? []);
@@ -330,10 +330,10 @@ export default function Inventory() {
                   items.map((item) => (
                     <TableRow key={item._id}>
                       <TableCell className="px-4 py-2.5 text-left align-middle font-medium text-gray-800 dark:text-white/90">
-                        {productName(item)}
+                        {productName(item) as string}
                       </TableCell>
                       <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400 text-theme-xs">
-                        {variantDisplay(item)}
+                        {variantDisplay(item) as string}
                       </TableCell>
                       <TableCell className="px-4 py-2.5 text-left align-middle text-gray-500 dark:text-gray-400">
                         {item.sku ?? "—"}

@@ -43,7 +43,7 @@ export default function MonthlySalesChart() {
     setLoading(true);
     analyticsApi
       .getSales({ startDate, endDate, groupBy: "month" })
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: unknown } }) => {
         if (!res.data?.success || !res.data?.data) {
           setPoints([]);
           return;

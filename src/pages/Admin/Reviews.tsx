@@ -76,7 +76,7 @@ export default function Reviews() {
 
     reviewApi
       .list(params)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: { items?: ReviewItem[]; total?: number } } }) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data;
           setItems(d.items ?? []);
@@ -105,7 +105,7 @@ export default function Reviews() {
   useEffect(() => {
     productApi
       .list({ page: 1, limit: 200, sortBy: "latest" })
-      .then((res: { data: { success?: boolean; data?: { items?: ProductOption[] } } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data?.items) {
           setProducts(res.data.data.items);
         }

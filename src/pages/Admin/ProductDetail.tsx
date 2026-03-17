@@ -349,7 +349,7 @@ function VariantsTab({
     setLoading(true);
     variantApi
       .listByProduct(productId)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: Variant[] } }) => {
         if (res.data.success && res.data.data) {
           setItems(Array.isArray(res.data.data) ? res.data.data : []);
         } else {
@@ -619,7 +619,7 @@ function InventoryTab({
     setLoading(true);
     inventoryApi
       .list({ page: 1, limit: 50, productId })
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: { items?: InventoryItem[] } } }) => {
         if (res.data.success && res.data.data) {
           setItems(res.data.data.items ?? []);
         } else {
@@ -634,7 +634,7 @@ function InventoryTab({
   }, [productId, onAlert]);
 
   const fetchVariants = useCallback(() => {
-    variantApi.listByProduct(productId).then((res) => {
+    variantApi.listByProduct(productId).then((res: { data: { success?: boolean; data?: Variant[] } }) => {
       if (res.data.success && res.data.data) {
         setVariants(Array.isArray(res.data.data) ? res.data.data : []);
       } else {

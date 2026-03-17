@@ -72,7 +72,7 @@ export default function Banners() {
     if (filters.isActive !== undefined) params.isActive = filters.isActive;
     bannerApi
       .list(params)
-      .then((res: { data: { success?: boolean; data?: { items?: Banner[] } | Banner[] } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data !== undefined) {
           setItems(getBannerList(res.data.data as { items?: Banner[] } | Banner[]));
         } else {

@@ -58,7 +58,7 @@ export default function InventoryDetail() {
     setLoading(true);
     inventoryApi
       .getById(id)
-      .then((res) => {
+      .then((res: { data: { success: boolean; data: InventoryItem } }) => {
         if (res.data.success && res.data.data) {
           const inv = res.data.data;
           setItem(inv);
@@ -80,7 +80,7 @@ export default function InventoryDetail() {
     if (!id) return;
     inventoryApi
       .getHistory(id, { page: historyPage, limit: historyLimit })
-      .then((res) => {
+      .then((res: { data: { success: boolean; data: { items: InventoryHistoryItem[]; total: number } } }) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data;
           setHistory(d.items ?? []);
@@ -128,7 +128,7 @@ export default function InventoryDetail() {
         warehouseLocation: updateForm.warehouseLocation.trim() || undefined,
         notes: updateForm.notes.trim() || undefined,
       })
-      .then((res) => {
+      .then((res: { data: { success: boolean; data: InventoryItem } }) => {
         if (res.data.success && res.data.data) setItem(res.data.data);
         setAlertState({
           variant: "success",
@@ -157,7 +157,7 @@ export default function InventoryDetail() {
         reason: addStockForm.reason,
         notes: addStockForm.notes.trim() || undefined,
       })
-      .then((res) => {
+      .then((res: { data: { success: boolean; data: InventoryItem } }) => {
         if (res.data.success && res.data.data) setItem(res.data.data);
         setAddStockForm((f) => ({ ...f, quantity: 0, notes: "" }));
         setAlertState({
@@ -196,7 +196,7 @@ export default function InventoryDetail() {
         reason: removeStockForm.reason,
         notes: removeStockForm.notes.trim() || undefined,
       })
-      .then((res) => {
+      .then((res: { data: { success: boolean; data: InventoryItem } }) => {
         if (res.data.success && res.data.data) setItem(res.data.data);
         setRemoveStockForm((f) => ({ ...f, quantity: 0, notes: "" }));
         setAlertState({

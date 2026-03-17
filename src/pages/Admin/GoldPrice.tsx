@@ -15,7 +15,7 @@ export default function GoldPrice() {
     setFetching(true);
     goldPriceApi
       .getLatest(purity)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: unknown } }) => {
         if (res.data.success && res.data.data) {
           setLatest(res.data.data as { purity?: string; pricePerGram?: number });
           const p = (res.data.data as { pricePerGram?: number }).pricePerGram;
@@ -46,7 +46,7 @@ export default function GoldPrice() {
         fetchLatest();
         alert("Gold price updated.");
       })
-      .catch((err) =>
+      .catch((err: { message?: string }) =>
         alert((err as { message?: string })?.message ?? "Update failed")
       )
       .finally(() => setLoading(false));

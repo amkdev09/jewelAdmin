@@ -32,21 +32,6 @@ function formatCurrency(n: number) {
   }).format(n);
 }
 
-function orderBadgeColor(status: string) {
-  switch (status) {
-    case "delivered":
-      return "success";
-    case "shipped":
-    case "processing":
-    case "confirmed":
-      return "warning";
-    case "cancelled":
-      return "error";
-    default:
-      return "warning";
-  }
-}
-
 const ORDER_STATUSES: OrderStatus[] = [
   "pending",
   "confirmed",
@@ -73,7 +58,7 @@ export default function Orders() {
         sortBy: "latest",
         ...(statusFilter ? { orderStatus: statusFilter as OrderStatus } : {}),
       })
-      .then((res: { data: { success?: boolean; data?: { items?: Order[]; total?: number } } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data) {
           const d = res.data.data as { items: Order[]; total: number };
           setItems(d.items ?? []);

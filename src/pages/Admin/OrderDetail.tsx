@@ -50,7 +50,7 @@ export default function OrderDetail() {
     if (!id) return;
     orderApi
       .getById(id)
-      .then((res) => {
+      .then((res: { data: { success?: boolean; data?: unknown } }) => {
         if (res.data.success && res.data.data) {
           const o = res.data.data as OrderDetailType;
           setOrder(o);
@@ -72,7 +72,7 @@ export default function OrderDetail() {
         if (order) setOrder({ ...order, orderStatus, trackingNumber });
         alert("Order status updated.");
       })
-      .catch((err) =>
+      .catch((err: unknown) =>
         alert((err as { message?: string })?.message ?? "Update failed")
       )
       .finally(() => setSaving(false));
