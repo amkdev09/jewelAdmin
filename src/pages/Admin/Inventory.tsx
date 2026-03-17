@@ -94,7 +94,7 @@ export default function Inventory() {
   useEffect(() => {
     productApi
       .list({ page: 1, limit: 50, sortBy: "latest" })
-      .then((res: { data: { success?: boolean; data?: { items?: ProductOption[] } } }) => {
+      .then((res: any) => {
         if (res.data.success && res.data.data?.items) {
           setProducts(res.data.data.items);
         }
